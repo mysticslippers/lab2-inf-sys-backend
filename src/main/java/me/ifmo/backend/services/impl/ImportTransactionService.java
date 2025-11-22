@@ -11,6 +11,7 @@ import me.ifmo.backend.entities.*;
 import me.ifmo.backend.repositories.ImportOperationRepository;
 import me.ifmo.backend.repositories.RouteRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -57,7 +58,7 @@ public class ImportTransactionService {
         importOperationRepository.save(op);
     }
 
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public int importRoutes(MultipartFile file) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
 
