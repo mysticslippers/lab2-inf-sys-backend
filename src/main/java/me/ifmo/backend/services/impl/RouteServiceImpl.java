@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -56,7 +57,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public RouteDTO create(RouteDTO dto) {
         validateForCreate(dto);
 
@@ -79,7 +80,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public RouteDTO update(Long id, RouteDTO dto) {
         validateForCreate(dto);
 
@@ -162,7 +163,7 @@ public class RouteServiceImpl implements RouteService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.REPEATABLE_READ)
     public RouteDTO addRouteBetween(Long fromId, Long toId, RouteDTO dto) {
         validateForCreate(dto);
 
