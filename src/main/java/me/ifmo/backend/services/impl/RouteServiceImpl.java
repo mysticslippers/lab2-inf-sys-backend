@@ -8,8 +8,6 @@ import me.ifmo.backend.DTO.RouteDTO;
 import me.ifmo.backend.entities.Coordinates;
 import me.ifmo.backend.entities.Location;
 import me.ifmo.backend.entities.Route;
-import me.ifmo.backend.mappers.CoordinatesMapper;
-import me.ifmo.backend.mappers.LocationMapper;
 import me.ifmo.backend.mappers.RouteMapper;
 import me.ifmo.backend.repositories.CoordinatesRepository;
 import me.ifmo.backend.repositories.LocationRepository;
@@ -36,9 +34,7 @@ public class RouteServiceImpl implements RouteService {
     private static final String TOPIC = "/topic/routes";
 
     private final RouteRepository routeRepository;
-    private final RouteMapper routeMapper;
-    private final CoordinatesMapper coordinatesMapper;
-    private final LocationMapper locationMapper;
+    private final RouteMapper mapper;
     private final SimpMessagingTemplate messagingTemplate;
     private final CoordinatesRepository coordinatesRepository;
     private final LocationRepository locationRepository;
@@ -46,14 +42,14 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public Page<RouteDTO> getAllRoutes(Pageable pageable) {
         return routeRepository.findAll(pageable)
-                .map(routeMapper::toDto);
+                .map(mapper::toDto);
     }
 
     @Override
     public RouteDTO getById(Long id) {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Route with id " + id + " not found"));
-        return routeMapper.toDto(route);
+        return mapper.toDto(route);
     }
 
     @Override
@@ -63,7 +59,7 @@ public class RouteServiceImpl implements RouteService {
 
         checkUniqueOnCreate(dto);
 
-        Route route = routeMapper.toEntity(dto);
+        Route route = mapper.toEntity(dto);
         route.setCreationDate(LocalDateTime.now());
 
         route.setCoordinates(resolveCoordinates(dto.getCoordinates()));
@@ -71,7 +67,7 @@ public class RouteServiceImpl implements RouteService {
         route.setTo(resolveLocation(dto.getTo(), "to"));
 
         Route saved = routeRepository.save(route);
-        RouteDTO result = routeMapper.toDto(saved);
+        RouteDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -89,14 +85,14 @@ public class RouteServiceImpl implements RouteService {
         Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Route not found with id = " + id));
 
-        routeMapper.updateEntityFromDto(dto, route);
+        mapper.updateEntityFromDto(dto, route);
 
         route.setCoordinates(resolveCoordinates(dto.getCoordinates()));
         route.setFrom(resolveLocation(dto.getFrom(), "from"));
         route.setTo(resolveLocation(dto.getTo(), "to"));
 
         Route saved = routeRepository.save(route);
-        RouteDTO result = routeMapper.toDto(saved);
+        RouteDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -116,7 +112,7 @@ public class RouteServiceImpl implements RouteService {
 
         messagingTemplate.convertAndSend(
                 TOPIC,
-                new WebSocketEvent("route", "delete", routeMapper.toDto(existing))
+                new WebSocketEvent("route", "delete", mapper.toDto(existing))
         );
     }
 
@@ -124,7 +120,7 @@ public class RouteServiceImpl implements RouteService {
     public RouteDTO findMinDistance() {
         Route route = routeRepository.findRouteWithMinDistance()
                 .orElseThrow(() -> new EntityNotFoundException("No routes with non-null distance found"));
-        return routeMapper.toDto(route);
+        return mapper.toDto(route);
     }
 
     @Override
@@ -160,7 +156,7 @@ public class RouteServiceImpl implements RouteService {
 
         return routes.stream()
                 .sorted(comparator)
-                .map(routeMapper::toDto)
+                .map(mapper::toDto)
                 .toList();
     }
 
@@ -174,7 +170,7 @@ public class RouteServiceImpl implements RouteService {
         Location to = locationRepository.findById(toId)
                 .orElseThrow(() -> new EntityNotFoundException("To location not found: " + toId));
 
-        Route route = routeMapper.toEntity(dto);
+        Route route = mapper.toEntity(dto);
         route.setCreationDate(LocalDateTime.now());
 
         route.setFrom(from);
@@ -182,7 +178,7 @@ public class RouteServiceImpl implements RouteService {
         route.setCoordinates(resolveCoordinates(dto.getCoordinates()));
 
         Route saved = routeRepository.save(route);
-        RouteDTO result = routeMapper.toDto(saved);
+        RouteDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -200,7 +196,7 @@ public class RouteServiceImpl implements RouteService {
             return coordinatesRepository.findById(dto.getId())
                     .orElseThrow(() -> new EntityNotFoundException("Coordinates not found: " + dto.getId()));
         }
-        Coordinates coordinates = coordinatesMapper.toEntity(dto);
+        Coordinates coordinates = mapper.toEntity(dto);
         coordinates.setId(null);
         return coordinates;
     }
@@ -213,7 +209,7 @@ public class RouteServiceImpl implements RouteService {
             return locationRepository.findById(dto.getId())
                     .orElseThrow(() -> new EntityNotFoundException("Location (" + role + ") not found: " + dto.getId()));
         }
-        Location location = locationMapper.toEntity(dto);
+        Location location = mapper.toEntity(dto);
         location.setId(null);
         return location;
     }
