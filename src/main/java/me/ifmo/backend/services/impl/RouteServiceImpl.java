@@ -61,6 +61,8 @@ public class RouteServiceImpl implements RouteService {
     public RouteDTO create(RouteDTO dto) {
         validateForCreate(dto);
 
+        checkUniqueOnCreate(dto);
+
         Route route = routeMapper.toEntity(dto);
         route.setCreationDate(LocalDateTime.now());
 
@@ -237,6 +239,27 @@ public class RouteServiceImpl implements RouteService {
         }
         if (dto.getRating() == null || dto.getRating() <= 0.0) {
             throw new IllegalArgumentException("Route.rating must be greater than 0");
+        }
+    }
+
+    private void checkUniqueOnCreate(RouteDTO dto) {
+        if (dto.getFrom() == null || dto.getTo() == null) {
+            return;
+        }
+
+        Long fromId = dto.getFrom().getId();
+        Long toId = dto.getTo().getId();
+
+        if (fromId == null || toId == null) {
+            return;
+        }
+
+        String name = dto.getName();
+
+        if (routeRepository.existsByNameAndFrom_IdAndTo_Id(name, fromId, toId)) {
+            throw new IllegalStateException(
+                    "Route with name '" + name + "' and endpoints (" + fromId + " -> " + toId + ") already exists"
+            );
         }
     }
 }
