@@ -4,7 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import me.ifmo.backend.DTO.LocationDTO;
 import me.ifmo.backend.entities.Location;
-import me.ifmo.backend.mappers.LocationMapper;
+import me.ifmo.backend.mappers.RouteMapper;
 import me.ifmo.backend.repositories.LocationRepository;
 import me.ifmo.backend.repositories.RouteRepository;
 import me.ifmo.backend.services.LocationService;
@@ -24,14 +24,14 @@ public class LocationServiceImpl implements LocationService {
 
     private final LocationRepository locationRepository;
     private final RouteRepository routeRepository;
-    private final LocationMapper locationMapper;
+    private final RouteMapper mapper;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public List<LocationDTO> getAllLocations() {
         return locationRepository.findAll()
                 .stream()
-                .map(locationMapper::toDto)
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -40,7 +40,7 @@ public class LocationServiceImpl implements LocationService {
         Location location = locationRepository.findById(id)
                 .orElseThrow(() ->
                         new EntityNotFoundException("Location with id " + id + " not found"));
-        return locationMapper.toDto(location);
+        return mapper.toDto(location);
     }
 
     @Override
@@ -48,11 +48,11 @@ public class LocationServiceImpl implements LocationService {
     public LocationDTO create(LocationDTO dto) {
         validate(dto);
 
-        Location entity = locationMapper.toEntity(dto);
+        Location entity = mapper.toEntity(dto);
         entity.setId(null);
 
         Location saved = locationRepository.save(entity);
-        LocationDTO result = locationMapper.toDto(saved);
+        LocationDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -68,15 +68,12 @@ public class LocationServiceImpl implements LocationService {
         validate(dto);
 
         Location existing = locationRepository.findById(id)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Location with id " + id + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Location with id " + id + " not found"));
 
-        existing.setX(dto.getX());
-        existing.setY(dto.getY());
-        existing.setZ(dto.getZ());
+        mapper.updateEntityFromDto(dto, existing);
 
         Location saved = locationRepository.save(existing);
-        LocationDTO result = locationMapper.toDto(saved);
+        LocationDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -104,7 +101,7 @@ public class LocationServiceImpl implements LocationService {
 
         messagingTemplate.convertAndSend(
                 TOPIC,
-                new WebSocketEvent("location", "delete", locationMapper.toDto(existing))
+                new WebSocketEvent("location", "delete", mapper.toDto(existing))
         );
     }
 
