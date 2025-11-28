@@ -4,7 +4,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import me.ifmo.backend.DTO.CoordinatesDTO;
 import me.ifmo.backend.entities.Coordinates;
-import me.ifmo.backend.mappers.CoordinatesMapper;
+import me.ifmo.backend.mappers.RouteMapper;
 import me.ifmo.backend.repositories.CoordinatesRepository;
 import me.ifmo.backend.repositories.RouteRepository;
 import me.ifmo.backend.services.CoordinatesService;
@@ -24,14 +24,14 @@ public class CoordinatesServiceImpl implements CoordinatesService {
 
     private final CoordinatesRepository coordinatesRepository;
     private final RouteRepository routeRepository;
-    private final CoordinatesMapper coordinatesMapper;
+    private final RouteMapper mapper;
     private final SimpMessagingTemplate messagingTemplate;
 
     @Override
     public List<CoordinatesDTO> getAllCoordinates() {
         return coordinatesRepository.findAll()
                 .stream()
-                .map(coordinatesMapper::toDto)
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
     }
 
@@ -40,7 +40,7 @@ public class CoordinatesServiceImpl implements CoordinatesService {
         Coordinates entity = coordinatesRepository.findById(id)
                 .orElseThrow(() ->
                         new EntityNotFoundException("Coordinates with id " + id + " not found"));
-        return coordinatesMapper.toDto(entity);
+        return mapper.toDto(entity);
     }
 
     @Override
@@ -48,11 +48,11 @@ public class CoordinatesServiceImpl implements CoordinatesService {
     public CoordinatesDTO create(CoordinatesDTO dto) {
         validate(dto);
 
-        Coordinates entity = coordinatesMapper.toEntity(dto);
+        Coordinates entity = mapper.toEntity(dto);
         entity.setId(null);
 
         Coordinates saved = coordinatesRepository.save(entity);
-        CoordinatesDTO result = coordinatesMapper.toDto(saved);
+        CoordinatesDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -68,14 +68,12 @@ public class CoordinatesServiceImpl implements CoordinatesService {
         validate(dto);
 
         Coordinates existing = coordinatesRepository.findById(id)
-                .orElseThrow(() ->
-                        new EntityNotFoundException("Coordinates with id " + id + " not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Coordinates with id " + id + " not found"));
 
-        existing.setX(dto.getX());
-        existing.setY(dto.getY());
+        mapper.updateEntityFromDto(dto, existing);
 
         Coordinates saved = coordinatesRepository.save(existing);
-        CoordinatesDTO result = coordinatesMapper.toDto(saved);
+        CoordinatesDTO result = mapper.toDto(saved);
 
         messagingTemplate.convertAndSend(
                 TOPIC,
@@ -103,7 +101,7 @@ public class CoordinatesServiceImpl implements CoordinatesService {
 
         messagingTemplate.convertAndSend(
                 TOPIC,
-                new WebSocketEvent("coordinates", "delete", coordinatesMapper.toDto(existing))
+                new WebSocketEvent("coordinates", "delete", mapper.toDto(existing))
         );
     }
 
