@@ -34,4 +34,6 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
     boolean existsByCoordinates_Id(Long coordinatesId);
 
     boolean existsByFrom_IdOrTo_Id(Long fromId, Long toId);
+
+    boolean existsByNameAndFrom_IdAndTo_Id(String name, Long fromId, Long toId);
 }
