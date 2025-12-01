@@ -2,6 +2,7 @@ package me.ifmo.backend.services.impl;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import me.ifmo.backend.AOP.LogExecution;
 import me.ifmo.backend.DTO.CoordinatesDTO;
 import me.ifmo.backend.DTO.LocationDTO;
 import me.ifmo.backend.DTO.RouteDTO;
@@ -54,6 +55,7 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @LogExecution
     public RouteDTO create(RouteDTO dto) {
         validateForCreate(dto);
 
@@ -79,6 +81,7 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     @Transactional(isolation = Isolation.REPEATABLE_READ)
+    @LogExecution
     public RouteDTO update(Long id, RouteDTO dto) {
         validateForCreate(dto);
 
