@@ -6,7 +6,4 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface LogExecution {
-    boolean logArgs() default true;
-
-    boolean logResult() default true;
 }
