@@ -2,6 +2,8 @@ package me.ifmo.backend.services.impl;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import me.ifmo.backend.AOP.LogExecution;
+import me.ifmo.backend.AOP.ProfileImport;
 import me.ifmo.backend.DTO.ImportOperationDTO;
 import me.ifmo.backend.entities.ImportOperation;
 import me.ifmo.backend.repositories.ImportOperationRepository;
@@ -20,6 +22,8 @@ public class ImportServiceImpl implements ImportService {
     private final ImportTransactionService importTransactionService;
 
     @Override
+    @LogExecution
+    @ProfileImport
     public ImportOperationDTO importRoutes(MultipartFile file, String username) throws IOException {
 
         ImportOperation op = importTransactionService.createOperation(username, "route");
