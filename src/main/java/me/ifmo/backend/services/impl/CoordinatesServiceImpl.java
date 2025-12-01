@@ -2,6 +2,7 @@ package me.ifmo.backend.services.impl;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import me.ifmo.backend.AOP.LogExecution;
 import me.ifmo.backend.DTO.CoordinatesDTO;
 import me.ifmo.backend.entities.Coordinates;
 import me.ifmo.backend.mappers.RouteMapper;
@@ -45,6 +46,7 @@ public class CoordinatesServiceImpl implements CoordinatesService {
 
     @Override
     @Transactional
+    @LogExecution
     public CoordinatesDTO create(CoordinatesDTO dto) {
         validate(dto);
 
@@ -64,6 +66,7 @@ public class CoordinatesServiceImpl implements CoordinatesService {
 
     @Override
     @Transactional
+    @LogExecution
     public CoordinatesDTO update(Long id, CoordinatesDTO dto) {
         validate(dto);
 
