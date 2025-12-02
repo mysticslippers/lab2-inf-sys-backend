@@ -4,12 +4,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import me.ifmo.backend.DTO.CoordinatesDTO;
-import me.ifmo.backend.DTO.LocationDTO;
 import me.ifmo.backend.DTO.RouteDTO;
-import me.ifmo.backend.entities.*;
+import me.ifmo.backend.entities.ImportOperation;
+import me.ifmo.backend.entities.ImportStatus;
 import me.ifmo.backend.repositories.ImportOperationRepository;
-import me.ifmo.backend.repositories.RouteRepository;
+import me.ifmo.backend.services.RouteService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -18,7 +17,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,7 +24,7 @@ import java.util.List;
 public class ImportTransactionService {
 
     private final ImportOperationRepository importOperationRepository;
-    private final RouteRepository routeRepository;
+    private final RouteService routeService;
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public ImportOperation createOperation(String username, String objectType) {
@@ -72,31 +70,28 @@ public class ImportTransactionService {
             throw new IllegalArgumentException("Import file is empty");
         }
 
-        List<Route> routes = new ArrayList<>();
-
         int index = 0;
+        int imported = 0;
+
         for (RouteDTO dto : dtoList) {
             index++;
 
-            validateForCreate(dto, index);
+            try {
+                validateForCreate(dto, index);
+                
+                routeService.create(dto);
 
-            Route route = new Route();
-            route.setName(dto.getName());
-            route.setDistance(dto.getDistance());
-            route.setRating(dto.getRating());
-            route.setCreationDate(LocalDateTime.now());
-
-            route.setCoordinates(toCoordinates(dto.getCoordinates(), index));
-            route.setFrom(toLocation(dto.getFrom(), "from", index));
-            route.setTo(toLocation(dto.getTo(), "to", index));
-
-            routes.add(route);
+                imported++;
+            } catch (IllegalArgumentException | IllegalStateException exception) {
+                throw new IllegalStateException(
+                        "Ошибка при обработке маршрута #" + index + ": " + exception.getMessage(),
+                        exception
+                );
+            }
         }
 
-        routeRepository.saveAll(routes);
-        return routes.size();
+        return imported;
     }
-
 
     private void validateForCreate(RouteDTO dto, int index) {
         if (dto == null) {
@@ -120,32 +115,5 @@ public class ImportTransactionService {
         if (dto.getTo() == null) {
             throw new IllegalArgumentException("Route.to must not be null at index " + index);
         }
-    }
-
-    private Coordinates toCoordinates(CoordinatesDTO dto, int index) {
-        if (dto.getX() == null) {
-            throw new IllegalArgumentException("Coordinates.x must not be null at index " + index);
-        }
-        if (dto.getY() == null || dto.getY() <= -976.0f) {
-            throw new IllegalArgumentException("Coordinates.y must be > -976 at index " + index);
-        }
-        Coordinates c = new Coordinates();
-        c.setX(dto.getX());
-        c.setY(dto.getY());
-        return c;
-    }
-
-    private Location toLocation(LocationDTO dto, String role, int index) {
-        if (dto.getY() == null) {
-            throw new IllegalArgumentException("Location(" + role + ").y must not be null at index " + index);
-        }
-        if (dto.getZ() == null) {
-            throw new IllegalArgumentException("Location(" + role + ").z must not be null at index " + index);
-        }
-        Location loc = new Location();
-        loc.setX(dto.getX());
-        loc.setY(dto.getY());
-        loc.setZ(dto.getZ());
-        return loc;
     }
 }
