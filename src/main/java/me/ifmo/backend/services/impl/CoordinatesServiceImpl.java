@@ -49,6 +49,7 @@ public class CoordinatesServiceImpl implements CoordinatesService {
     @LogExecution
     public CoordinatesDTO create(CoordinatesDTO dto) {
         validate(dto);
+        checkUniqueOnCreate(dto);
 
         Coordinates entity = mapper.toEntity(dto);
         entity.setId(null);
@@ -69,6 +70,7 @@ public class CoordinatesServiceImpl implements CoordinatesService {
     @LogExecution
     public CoordinatesDTO update(Long id, CoordinatesDTO dto) {
         validate(dto);
+        checkUniqueOnUpdate(id, dto);
 
         Coordinates existing = coordinatesRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Coordinates with id " + id + " not found"));
@@ -122,4 +124,25 @@ public class CoordinatesServiceImpl implements CoordinatesService {
             throw new IllegalArgumentException("Coordinates.y must be greater than -976");
         }
     }
+
+    private void checkUniqueOnCreate(CoordinatesDTO dto) {
+        if (coordinatesRepository.existsByXAndY(dto.getX(), dto.getY())) {
+            throw new IllegalStateException(
+                    "Coordinates (" + dto.getX() + ", " + dto.getY() + ") already exist"
+            );
+        }
+    }
+
+    private void checkUniqueOnUpdate(Long id, CoordinatesDTO dto) {
+        List<Coordinates> existingList = coordinatesRepository.findAllByXAndY(dto.getX(), dto.getY());
+
+        for (Coordinates other : existingList) {
+            if (!other.getId().equals(id)) {
+                throw new IllegalStateException(
+                        "Coordinates (" + dto.getX() + ", " + dto.getY() + ") already exist for id=" + other.getId()
+                );
+            }
+        }
+    }
+
 }
