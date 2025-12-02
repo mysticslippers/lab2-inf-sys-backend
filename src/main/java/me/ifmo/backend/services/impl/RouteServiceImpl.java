@@ -195,23 +195,54 @@ public class RouteServiceImpl implements RouteService {
         if (dto == null) {
             throw new IllegalArgumentException("Route.coordinates cannot be null");
         }
+
         if (dto.getId() != null) {
             return coordinatesRepository.findById(dto.getId())
                     .orElseThrow(() -> new EntityNotFoundException("Coordinates not found: " + dto.getId()));
         }
+
+        if (dto.getX() == null || dto.getY() == null) {
+            throw new IllegalArgumentException("Coordinates x and y must be provided");
+        }
+
+        List<Coordinates> existingList = coordinatesRepository.findAllByXAndY(dto.getX(), dto.getY());
+        if (!existingList.isEmpty()) {
+            return existingList.get(0);
+        }
+
         Coordinates coordinates = mapper.toEntity(dto);
         coordinates.setId(null);
         return coordinates;
     }
 
+
     private Location resolveLocation(LocationDTO dto, String role) {
         if (dto == null) {
             throw new IllegalArgumentException("Location (" + role + ") cannot be null");
         }
+
         if (dto.getId() != null) {
             return locationRepository.findById(dto.getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Location (" + role + ") not found: " + dto.getId()));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Location (" + role + ") not found: " + dto.getId()
+                    ));
         }
+
+        Long x = dto.getX();
+        Long y = dto.getY();
+        Double z = dto.getZ();
+
+        if (y == null || z == null) {
+            throw new IllegalArgumentException("Location (" + role + ") must have y and z");
+        }
+
+        if (x != null) {
+            List<Location> existing = locationRepository.findAllByXAndYAndZ(x, y, z);
+            if (!existing.isEmpty()) {
+                return existing.get(0);
+            }
+        }
+
         Location location = mapper.toEntity(dto);
         location.setId(null);
         return location;
@@ -242,23 +273,52 @@ public class RouteServiceImpl implements RouteService {
     }
 
     private void checkUniqueOnCreate(RouteDTO dto) {
-        if (dto.getFrom() == null || dto.getTo() == null) {
-            return;
-        }
-
-        Long fromId = dto.getFrom().getId();
-        Long toId = dto.getTo().getId();
-
-        if (fromId == null || toId == null) {
+        if (dto == null || dto.getFrom() == null || dto.getTo() == null) {
             return;
         }
 
         String name = dto.getName();
 
-        if (routeRepository.existsByNameAndFrom_IdAndTo_Id(name, fromId, toId)) {
+        Long fromId = dto.getFrom().getId();
+        Long toId = dto.getTo().getId();
+
+        if (fromId != null && toId != null) {
+            if (routeRepository.existsByNameAndFrom_IdAndTo_Id(name, fromId, toId)) {
+                throw new IllegalStateException(
+                        "Route with name '" + name + "' and endpoints (" + fromId + " -> " + toId + ") already exists"
+                );
+            }
+            return;
+        }
+
+        LocationDTO from = dto.getFrom();
+        LocationDTO to = dto.getTo();
+
+        if (from.getY() == null || from.getZ() == null || to.getY() == null || to.getZ() == null) {
+            return;
+        }
+
+        Long fromX = from.getX();
+        Long fromY = from.getY();
+        Double fromZ = from.getZ();
+
+        Long toX = to.getX();
+        Long toY = to.getY();
+        Double toZ = to.getZ();
+
+        boolean exists = routeRepository.existsByNameAndFrom_XAndFrom_YAndFrom_ZAndTo_XAndTo_YAndTo_Z(
+                name,
+                fromX, fromY, fromZ,
+                toX, toY, toZ
+        );
+
+        if (exists) {
             throw new IllegalStateException(
-                    "Route with name '" + name + "' and endpoints (" + fromId + " -> " + toId + ") already exists"
+                    "Route with name '" + name + "' and endpoints (" +
+                            "from: [" + fromX + "," + fromY + "," + fromZ + "], " +
+                            "to: [" + toX + "," + toY + "," + toZ + "]) already exists"
             );
         }
     }
+
 }
