@@ -49,6 +49,7 @@ public class LocationServiceImpl implements LocationService {
     @LogExecution
     public LocationDTO create(LocationDTO dto) {
         validate(dto);
+        checkUniqueOnCreate(dto);
 
         Location entity = mapper.toEntity(dto);
         entity.setId(null);
@@ -69,6 +70,7 @@ public class LocationServiceImpl implements LocationService {
     @LogExecution
     public LocationDTO update(Long id, LocationDTO dto) {
         validate(dto);
+        checkUniqueOnUpdate(id, dto);
 
         Location existing = locationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Location with id " + id + " not found"));
@@ -117,6 +119,34 @@ public class LocationServiceImpl implements LocationService {
         }
         if (dto.getZ() == null) {
             throw new IllegalArgumentException("Location.z cannot be null");
+        }
+    }
+
+    private void checkUniqueOnCreate(LocationDTO dto) {
+        Long x = dto.getX();
+        Long y = dto.getY();
+        Double z = dto.getZ();
+
+        if (x == null || y == null || z == null) {
+            return;
+        }
+
+        if (locationRepository.existsByXAndYAndZ(x, y, z)) {
+            throw new IllegalStateException(
+                    "Location (" + x + ", " + y + ", " + z + ") already exists"
+            );
+        }
+    }
+
+    private void checkUniqueOnUpdate(Long id, LocationDTO dto) {
+        List<Location> existingList = locationRepository.findAllByXAndYAndZ(dto.getX(), dto.getY(), dto.getZ());
+
+        for (Location other : existingList) {
+            if(!other.getId().equals(id)) {
+                throw new IllegalStateException(
+                        "Location (" + dto.getX() + ", " + dto.getY() + ", " + dto.getZ() + ") already exists for id=" + other.getId()
+                );
+            }
         }
     }
 }
