@@ -36,4 +36,14 @@ public interface RouteRepository extends JpaRepository<Route, Long> {
     boolean existsByFrom_IdOrTo_Id(Long fromId, Long toId);
 
     boolean existsByNameAndFrom_IdAndTo_Id(String name, Long fromId, Long toId);
+
+    boolean existsByNameAndFrom_XAndFrom_YAndFrom_ZAndTo_XAndTo_YAndTo_Z(
+            String name,
+            Long fromX,
+            Long fromY,
+            Double fromZ,
+            Long toX,
+            Long toY,
+            Double toZ
+    );
 }
