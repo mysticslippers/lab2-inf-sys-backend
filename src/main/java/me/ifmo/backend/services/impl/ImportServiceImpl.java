@@ -31,9 +31,9 @@ public class ImportServiceImpl implements ImportService {
         try {
             int count = importTransactionService.importRoutes(file);
             importTransactionService.markSuccess(op.getId(), count);
-        } catch (RuntimeException ex) {
-            importTransactionService.markFailed(op.getId(), ex.getMessage());
-            throw ex;
+        } catch (RuntimeException exception) {
+            importTransactionService.markFailed(op.getId(), exception.getMessage());
+            throw exception;
         }
 
         ImportOperation fresh = importOperationRepository.findById(op.getId())
