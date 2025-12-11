@@ -62,8 +62,7 @@ public class ImportTransactionService {
 
         List<RouteDTO> dtoList = mapper.readValue(
                 file.getInputStream(),
-                new TypeReference<>() {
-                }
+                new TypeReference<>() {}
         );
 
         if (dtoList.isEmpty()) {
