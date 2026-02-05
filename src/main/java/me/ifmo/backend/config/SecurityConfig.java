@@ -22,6 +22,7 @@ public class SecurityConfig {
 
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/password-reset/**").permitAll()
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/import/operations/all").hasRole("ADMIN")
                         .requestMatchers("/api/import/**").authenticated()
