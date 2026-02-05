@@ -1,6 +1,7 @@
 package me.ifmo.backend.entities;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,7 +11,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "users", uniqueConstraints = @UniqueConstraint(name = "uk_users_username", columnNames = "username"))
+@Table(name = "users", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_users_username", columnNames = "username"),
+        @UniqueConstraint(name = "uk_users_email", columnNames = "email")
+})
 public class User {
 
     @Id
@@ -20,6 +24,11 @@ public class User {
     @NotBlank
     @Column(name = "username", nullable = false, length = 64)
     private String username;
+
+    @Email
+    @NotBlank
+    @Column(name = "email", nullable = false, length = 128)
+    private String email;
 
     @NotBlank
     @Column(name = "password", nullable = false)
@@ -34,6 +43,7 @@ public class User {
         return "User{" +
                 "id=" + id +
                 ", username='" + username + '\'' +
+                ", email='" + email + '\'' +
                 ", role=" + role +
                 '}';
     }
