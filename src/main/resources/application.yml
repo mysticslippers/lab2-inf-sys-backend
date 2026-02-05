@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/studs
     username: s368530
-    password: 6125371263126317261
+    password: P7Woe7Cwyk2MjZnN
     driver-class-name: org.postgresql.Driver
 
   jpa:
@@ -31,12 +31,29 @@ spring:
     serialization:
       write-dates-as-timestamps: false
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: eternal.martyr13579@gmail.com
+    password: "zyza pyuz jjad tmjn"
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080
 
 app:
   websocket:
     allowed-origins: "*"
+
+  password-reset:
+    frontend-reset-url-template: "http://localhost:3000/reset-password?token=%s"
+    token-ttl-minutes: 15
+    from-email: "eternal.martyr13579@gmail.com"
 
 logging:
   level:
